@@ -122,3 +122,22 @@ func (e Error) Error() string {
 	return string(e)
 
 }
+
+//FindAccountByID поис аккаунта по ID
+func FindAccountByID(accountID int64) (*types.Account, error) {
+	svc := Service{}
+	var accaount *types.Account
+
+	for _, acc := range svc.accounts {
+		if acc.ID == accountID {
+			accaount = acc
+			break
+		}
+	}
+
+	if accaount == nil {
+		return nil, ErrAccountNotFound
+	}
+
+	return accaount, nil
+}
