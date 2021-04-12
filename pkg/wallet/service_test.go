@@ -1,4 +1,11 @@
+package wallet
 
+import (
+	"reflect"
+	"testing"
+
+	"github.com/rgsgit/wallet/pkg/types"
+)
 
 func TestService_FindAccountByID_exist(t *testing.T) {
 	svc := Service{
