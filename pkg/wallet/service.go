@@ -160,3 +160,25 @@ func (s *Service) FindPaymentByID(paymetID string) (*types.Payment, error) {
 	return payment, nil
 
 }
+
+//Reject метод отмены платежа
+func (s *Service) Reject(paymentID string) error {
+	payment, err := s.FindPaymentByID(paymentID)
+	if payment == nil {
+		return err
+	}
+
+	if payment.Status == types.PaymentStatusFail {
+		return nil
+	}
+
+	acc, err := s.FindAccountByID(payment.AccountID)
+	if acc == nil {
+		return err
+	}
+
+	payment.Status = types.PaymentStatusFail
+	acc.Balance += payment.Amount
+
+	return nil
+}
