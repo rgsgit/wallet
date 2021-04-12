@@ -9,7 +9,7 @@ type Service struct{
 	payments 		[]types.Payment
 }
 
-func RegisterAccount(service *Service, phone types.Phone)  {
+func (service *Service)RegisterAccount( phone types.Phone)  {
 	for _, account := range service.accounts {
 		if account.Phone == phone {
 			return
