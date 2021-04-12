@@ -10,8 +10,8 @@ type Service struct{
 }
 
 func RegisterAccount(service *Service, phone types.Phone)  {
-	for _, account :=service.accounts {
-		if account.phone == phone {
+	for _, account := range service.accounts {
+		if account.Phone == phone {
 			return
 		}
 	}
