@@ -130,7 +130,7 @@ func TestService_FindPaymentByID_notFound(t *testing.T) {
 
 	err := svc.Reject("2")
 
-	if err != nil {
-		t.Errorf("Invalid Result: Err0: %v", err)
+	if err == nil {
+		t.Errorf("Invalid Result: Got: %v, Want:%v", nil, ErrPaymentNotFount)
 	}
 }
