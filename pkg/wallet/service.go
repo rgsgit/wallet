@@ -124,11 +124,10 @@ func (e Error) Error() string {
 }
 
 //FindAccountByID поис аккаунта по ID
-func FindAccountByID(accountID int64) (*types.Account, error) {
-	svc := Service{}
+func (s *Service) FindAccountByID(accountID int64) (*types.Account, error) {
 	var accaount *types.Account
 
-	for _, acc := range svc.accounts {
+	for _, acc := range s.accounts {
 		if acc.ID == accountID {
 			accaount = acc
 			break
