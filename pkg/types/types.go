@@ -35,4 +35,11 @@ type Account struct {
 	Balance Money
 }
 
-
+//Favirite шаблон для создания платежа
+type Favorite struct {
+	ID        string
+	AccountID int64
+	Name      string
+	Amount    Money
+	Category  PaymentCategory
+}
