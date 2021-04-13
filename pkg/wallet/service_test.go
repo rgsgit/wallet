@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/rgsgit/wallet/pkg/types"
 )
 
@@ -242,4 +243,65 @@ func TestService_Repeat_success(t *testing.T) {
 		t.Errorf("FindPaymentByID(): wrong payment returned = %v", err)
 	}
 
+}
+
+func TestService_Reject_notFound(t *testing.T) {
+	service := newTestService()
+	account, err := service.addAccountWithBalance("+992000000001", 100_00)
+	if err != nil {
+		t.Errorf("Reject() can't register account, error = %v", err)
+	}
+
+	err = service.Deposit(account.ID, 100_00)
+	if err != nil {
+		t.Errorf("Reject() can't deposit account, error = %v", err)
+	}
+	payment, err := service.Pay(1, 10_00, "auto")
+	if err != nil {
+		t.Errorf("Reject() can't create payment, error = %v", err)
+	}
+	err = service.Reject(payment.ID)
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+	_, err = service.FindPaymentByID(uuid.New().String())
+	if err != ErrPaymentNotFound {
+		t.Errorf("FindPaymentByID(): wrong must return ErrPaymentNotFound, returned = %v", err)
+
+	}
+}
+
+func TestService_Reject_success(t *testing.T) {
+	service := newTestService()
+	account, payments, err := service.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Errorf("Reject() can't register account. error = %v", err)
+	}
+	payment := payments[0]
+	payment, err = service.Pay(payment.AccountID, 10_00, "auto")
+	if err != nil {
+		t.Errorf("Reject() can't create payment, error = %v", err)
+	}
+	err = service.Reject(payment.ID)
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+	savedPayment, err := service.FindPaymentByID(payment.ID)
+	if err != nil {
+		t.Errorf("FindPaymentByID(): error = %v", err)
+		return
+	}
+	if savedPayment.Status != types.PaymentStatusFail {
+		t.Errorf("FindPaymentByID(): error = %v", err)
+		return
+	}
+
+	savedAccount, err := service.FindAccountByID(savedPayment.AccountID)
+	if err != nil {
+		t.Errorf("FindAccountByID(): error = %v", err)
+		return
+	}
+	if savedAccount.Balance != account.Balance {
+		t.Errorf("Balance didn't change: error = %v", savedAccount)
+	}
 }
