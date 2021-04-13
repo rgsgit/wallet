@@ -20,21 +20,7 @@ type Service struct {
 	payments      []*types.Payment
 }
 
-//RegisterAccount регистрация аккаунта
-func RegisterAccount(service *Service, phone types.Phone) {
-	for _, account := range service.accounts {
-		if account.Phone == phone {
-			return
-		}
-	}
 
-	service.nextAccountID++
-	service.accounts = append(service.accounts, &types.Account{
-		ID:      service.nextAccountID,
-		Phone:   phone,
-		Balance: 0,
-	})
-}
 
 //RegisterAccount метод регистрация аккаунта
 func (s *Service) RegisterAccount(phone types.Phone) (*types.Account, error) {
@@ -117,12 +103,12 @@ func (s *Service) Pay(accountID int64, amount types.Money, category types.Paymen
 	return payment, nil
 }
 
-type Error string
+/*type Error string
 
 func (e Error) Error() string {
 	return string(e)
 
-}
+}*/
 
 //FindAccountByID поис аккаунта по ID
 func (s *Service) FindAccountByID(accountID int64) (*types.Account, error) {
