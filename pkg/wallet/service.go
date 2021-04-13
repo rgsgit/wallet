@@ -201,4 +201,16 @@ func (s *Service) FavoritePayment(paymentID string, name string) (*types.Favorit
 	return favorite, nil
 }
 
-
+func (s *Service) GetFavoriteByID(favoriteID string) (*types.Favorite, error) {
+	var favorite *types.Favorite
+	for _, fav := range s.favorites {
+		if fav.ID == favoriteID {
+			favorite = fav
+			break
+		}
+	}
+	if favorite == nil {
+		return nil, ErrFavoriteNotFound
+	}
+	return favorite, nil
+}
