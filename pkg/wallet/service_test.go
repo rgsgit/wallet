@@ -298,3 +298,86 @@ func TestService_Reject_success(t *testing.T) {
 		t.Errorf("Balance didn't change: error = %v", savedAccount)
 	}
 }
+
+func TestServive_GetFavoriteByID_success(t *testing.T) {
+	s := newTestService()
+	account, payments, err := s.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Errorf("Reject() can't register account. Error = %v", err)
+	}
+	payment := payments[0]
+	payment, err = s.Pay(account.ID, 10_00, "auto")
+	if err != nil {
+		t.Errorf("Reject() can't create payment. Error = %v", err)
+		return
+	}
+	favorite, err := s.FavoritePayment(payment.ID, "First payment")
+	if err != nil {
+		t.Errorf("Error: %v ", err)
+		return
+	}
+	got, err := s.GetFavoriteByID(favorite.ID)
+	if err != nil {
+		t.Errorf("Error: %v ", err)
+		return
+	}
+	if !reflect.DeepEqual(favorite, got) {
+		t.Errorf("FindPaymentByID(): wrong payment returned = %v", err)
+	}
+}
+func TestServive_GetFavoriteByID_notFound(t *testing.T) {
+	s := newTestService()
+	account, payments, err := s.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Errorf("Reject() can't register account. Error = %v", err)
+	}
+	payment := payments[0]
+	payment, err = s.Pay(account.ID, 10_00, "auto")
+	if err != nil {
+		t.Errorf("Reject() can't create payment. Error = %v", err)
+		return
+	}
+	_, err = s.FavoritePayment(payment.ID, "First payment")
+	if err != nil {
+		t.Errorf("Error: %v ", err)
+		return
+	}
+	_, err = s.GetFavoriteByID(uuid.New().String())
+	if err == nil {
+		t.Errorf("Error: %v ", err)
+		return
+	}
+}
+
+func TestService_PayFromFavorite_success(t *testing.T) {
+	s := newTestService()
+	account, payments, err := s.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Errorf("Reject() can't register account. Error = %v", err)
+	}
+	payment := payments[0]
+	payment, err = s.Pay(account.ID, 10_00, "auto")
+	if err != nil {
+		t.Errorf("Reject() can't create payment. Error = %v", err)
+		return
+	}
+	favorite, err := s.FavoritePayment(payment.ID, "First payment")
+	if err != nil {
+		t.Errorf("Error: %v ", err)
+		return
+	}
+
+	newPayment, err := s.PayFromFavorite(favorite.ID)
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+
+	got, err := s.FindPaymentByID(newPayment.ID)
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+
+	if !reflect.DeepEqual(newPayment, got) {
+		t.Errorf("FindPaymentByID(): wrong payment returned = %v", err)
+	}
+}
