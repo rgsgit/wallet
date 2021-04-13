@@ -198,13 +198,6 @@ func TestService_FindPaymentByID_notFound(t *testing.T) {
 		},
 	}
 
-	/*payment := &types.Payment{
-		ID:        "1",
-		AccountID: 2,
-		Amount:    100_00,
-		Status:    types.PaymentStatusInProgress,
-	}*/
-
 	err := svc.Reject("2")
 
 	if err == nil {
