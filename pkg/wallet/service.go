@@ -13,14 +13,14 @@ var ErrAmmountMustBePositive = errors.New("ammount mus be greater then zero")
 var ErrAccountNotFound = errors.New("account not found")
 var ErrNotEnoughBalance = errors.New("not enough balance")
 var ErrPaymentNotFound = errors.New("payment not found")
+var ErrFavoriteNotFound = errors.New("favorite payment not found")
 
 type Service struct {
 	nextAccountID int64
 	accounts      []*types.Account
 	payments      []*types.Payment
+	favorites     []*types.Favorite
 }
-
-
 
 //RegisterAccount метод регистрация аккаунта
 func (s *Service) RegisterAccount(phone types.Phone) (*types.Account, error) {
@@ -184,3 +184,21 @@ func (s *Service) Repeat(paymentID string) (*types.Payment, error) {
 	return newPayment, nil
 
 }
+
+func (s *Service) FavoritePayment(paymentID string, name string) (*types.Favorite, error) {
+	payment, err := s.FindPaymentByID(paymentID)
+	if err != nil {
+		return nil, ErrPaymentNotFound
+	}
+	favorite := &types.Favorite{
+		ID:        uuid.New().String(),
+		AccountID: payment.AccountID,
+		Name:      name,
+		Amount:    payment.Amount,
+		Category:  payment.Category,
+	}
+	s.favorites = append(s.favorites, favorite)
+	return favorite, nil
+}
+
+
