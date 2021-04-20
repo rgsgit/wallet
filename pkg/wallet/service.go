@@ -279,6 +279,7 @@ func (s *Service) ImportFromFile(path string) error {
 
 		if err != nil {
 			log.Print(err)
+			return err
 		}
 		content = append(content, buf[:read]...)
 	}
