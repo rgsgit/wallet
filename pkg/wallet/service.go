@@ -2,9 +2,11 @@ package wallet
 
 import (
 	"errors"
+	"io"
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -248,6 +250,70 @@ func (s *Service) ExportToFile(path string) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+//ImportToFile импортирует даные из файла
+func (s *Service) ImportFromFile(path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Print(err)
+		}
+	}()
+
+	content := make([]byte, 0)
+	buf := make([]byte, 4)
+
+	for {
+		read, err := file.Read(buf)
+		if err == io.EOF {
+			content = append(content, buf[:read]...)
+			break
+		}
+
+		if err != nil {
+			log.Print(err)
+		}
+		content = append(content, buf[:read]...)
+	}
+
+	data := string(content)
+
+	accs := strings.Split(data, "|")
+
+	importedAccaunts := []*types.Account{}
+
+	for _, accaunt := range accs {
+		accDatas := strings.Split(accaunt, ";")
+		var importAccaount *types.Account
+		accID, err := strconv.ParseInt(accDatas[0], 10, 4)
+		if err != nil {
+			log.Print(err)
+			return err
+		}
+		importAccaount.ID = accID
+
+		phone, err := strconv.ParseInt(accDatas[1], 10, 4)
+		if err != nil {
+			log.Print(err)
+			return err
+		}
+		importAccaount.Phone = types.Phone(phone)
+
+		balance, err := strconv.ParseInt(accDatas[2], 10, 4)
+		if err != nil {
+			log.Print(err)
+			return err
+		}
+		importAccaount.Balance = types.Money(balance)
+
+		importedAccaunts = append(importedAccaunts, importAccaount)
 	}
 
 	return nil
