@@ -299,12 +299,12 @@ func (s *Service) ImportFromFile(path string) error {
 		}
 		importAccaount.ID = accID
 
-		phone, err := strconv.ParseInt(accDatas[1], 10, 4)
-		if err != nil {
-			log.Print(err)
-			return err
-		}
-		importAccaount.Phone = types.Phone(phone)
+		//phone, err := strconv.ParseInt(accDatas[1], 10, 4)
+		//if err != nil {
+		//	log.Print(err)
+		//	return err
+		//}
+		importAccaount.Phone = types.Phone(accDatas[1])
 
 		balance, err := strconv.ParseInt(accDatas[2], 10, 4)
 		if err != nil {
