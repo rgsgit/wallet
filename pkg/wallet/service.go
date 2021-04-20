@@ -299,6 +299,9 @@ func (s *Service) ImportFromFile(path string) error {
 			return errors.New("Nil")
 		}
 
+		if strAcc[0] == "" {
+			return errors.New("Nil str")
+		}
 		id, err := strconv.ParseInt(strAcc[0], 10, 64)
 		if err != nil {
 			log.Print(err)
