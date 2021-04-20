@@ -286,11 +286,17 @@ func (s *Service) ImportFromFile(path string) error {
 	data := string(content)
 
 	accs := strings.Split(data, "|")
+	if len(accs) <= 0 {
+		return errors.New("Nil acount")
+	}
 
 	importedAccaunts := []*types.Account{}
 
 	for _, accaunt := range accs {
 		accDatas := strings.Split(accaunt, ";")
+		if len(accDatas) <= 0 {
+			return errors.New("Nil ccount")
+		}
 		var importAccaount *types.Account
 		accID, err := strconv.ParseInt(accDatas[0], 10, 4)
 		if err != nil {
