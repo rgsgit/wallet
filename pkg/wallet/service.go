@@ -259,8 +259,10 @@ func (s *Service) ExportToFile(path string) error {
 func (s *Service) ImportFromFile(path string) error {
 	file, err := os.Open(path)
 	if err != nil {
+		log.Print(err)
 		return err
 	}
+
 	defer func() {
 		if err := file.Close(); err != nil {
 			log.Print(err)
@@ -269,7 +271,6 @@ func (s *Service) ImportFromFile(path string) error {
 
 	content := make([]byte, 0)
 	buf := make([]byte, 4)
-
 	for {
 		read, err := file.Read(buf)
 		if err == io.EOF {
@@ -279,42 +280,44 @@ func (s *Service) ImportFromFile(path string) error {
 
 		if err != nil {
 			log.Print(err)
+			return err
 		}
 		content = append(content, buf[:read]...)
 	}
 
 	data := string(content)
+	log.Println("data: ", data)
 
-	accs := strings.Split(data, "|")
+	acc := strings.Split(data, "|")
+	log.Println("acc: ", acc)
 
-	importedAccaunts := []*types.Account{}
+	for _, operation := range acc {
 
-	for _, accaunt := range accs {
-		accDatas := strings.Split(accaunt, ";")
-		var importAccaount *types.Account
-		accID, err := strconv.ParseInt(accDatas[0], 10, 4)
+		strAcc := strings.Split(operation, ";")
+		log.Println("strAcc:", strAcc)
+
+		id, err := strconv.ParseInt(strAcc[0], 10, 64)
 		if err != nil {
 			log.Print(err)
 			return err
 		}
-		importAccaount.ID = accID
 
-		phone, err := strconv.ParseInt(accDatas[1], 10, 4)
+		phone := types.Phone(strAcc[1])
+
+		balance, err := strconv.ParseInt(strAcc[2], 10, 64)
 		if err != nil {
 			log.Print(err)
 			return err
 		}
-		importAccaount.Phone = types.Phone(phone)
 
-		balance, err := strconv.ParseInt(accDatas[2], 10, 4)
-		if err != nil {
-			log.Print(err)
-			return err
+		account := &types.Account{
+			ID:      id,
+			Phone:   phone,
+			Balance: types.Money(balance),
 		}
-		importAccaount.Balance = types.Money(balance)
 
-		importedAccaunts = append(importedAccaunts, importAccaount)
+		s.accounts = append(s.accounts, account)
+		log.Print(account)
 	}
-
 	return nil
 }
