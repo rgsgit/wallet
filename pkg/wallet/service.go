@@ -2,6 +2,9 @@ package wallet
 
 import (
 	"errors"
+	"log"
+	"os"
+	"strconv"
 
 	"github.com/google/uuid"
 
@@ -225,4 +228,27 @@ func (s *Service) PayFromFavorite(favoriteID string) (*types.Payment, error) {
 		return nil, err
 	}
 	return payment, nil
+}
+
+//ExportToFile экспортирует аккаунт в файл
+func (s *Service) ExportToFile(path string) error {
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Print(err)
+		}
+	}()
+
+	for _, account := range s.accounts {
+		str := strconv.FormatInt(int64(account.ID), 10) + (";") + (string(account.Phone)) + (";") + (strconv.FormatInt(int64(account.Balance), 10)) + ("|")
+		_, err = file.Write([]byte(str))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
