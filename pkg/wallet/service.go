@@ -290,7 +290,7 @@ func (s *Service) ImportFromFile(path string) error {
 		return errors.New("Nil acount")
 	}
 
-	importedAccaunts := []*types.Account{}
+	//importedAccaunts := []*types.Account{}
 
 	for _, accaunt := range accs {
 		accDatas := strings.Split(accaunt, ";")
@@ -298,7 +298,7 @@ func (s *Service) ImportFromFile(path string) error {
 			return errors.New("Nil ccount")
 		}
 		var importAccaount *types.Account
-		accID, err := strconv.ParseInt(accDatas[0], 10, 4)
+		accID, err := strconv.ParseInt(accDatas[0], 10, 64)
 		if err != nil {
 			log.Print(err)
 			return err
@@ -312,14 +312,16 @@ func (s *Service) ImportFromFile(path string) error {
 		//}
 		importAccaount.Phone = types.Phone(accDatas[1])
 
-		balance, err := strconv.ParseInt(accDatas[2], 10, 4)
+		balance, err := strconv.ParseInt(accDatas[2], 10, 64)
 		if err != nil {
 			log.Print(err)
 			return err
 		}
 		importAccaount.Balance = types.Money(balance)
 
-		importedAccaunts = append(importedAccaunts, importAccaount)
+		//importedAccaunts = append(importedAccaunts, importAccaount)
+		s.accounts = append(s.accounts, importAccaount)
+		log.Print(importAccaount)
 	}
 
 	return nil
