@@ -694,3 +694,50 @@ func (s *Service) HistoryToFiles(payments []types.Payment, dir string, records i
 	}
 	return nil
 }
+
+//FilterPayments отфилтровывает плотежи по accountID.
+func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payment, error) {
+
+	_, err := s.FindAccountByID(accountID)
+	if err != nil {
+		return nil, err
+	}
+
+	if goroutines < 1 {
+		goroutines = 1
+	}
+
+	num := len(s.payments)/goroutines + 1
+
+	wg := sync.WaitGroup{}
+	mu := sync.Mutex{}
+
+	payments := []types.Payment{}
+
+	for i := 0; i < goroutines; i++ {
+
+		wg.Add(1)
+		partOfPayment := []types.Payment{}
+
+		go func(val int) {
+			defer wg.Done()
+			lowIndex := val * num
+			highIndex := (val * num) + num
+
+			for j := lowIndex; j < highIndex; j++ {
+				if j > len(s.payments)-1 {
+					break
+				}
+				if s.payments[j].AccountID == accountID {
+					partOfPayment = append(partOfPayment, *s.payments[j])
+				}
+			}
+			mu.Lock()
+			defer mu.Unlock()
+			payments = append(payments, partOfPayment...)
+		}(i)
+	}
+
+	wg.Wait()
+	return payments, nil
+}
