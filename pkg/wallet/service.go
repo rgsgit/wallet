@@ -355,13 +355,13 @@ func (s *Service) Export(dir string) error {
 	}
 
 	if s.payments != nil && len(s.payments) > 0 {
-		accDir, err := filepath.Abs(dir)
+		payDir, err := filepath.Abs(dir)
 		if err != nil {
 			log.Print(err)
 			return err
 		}
 
-		accData := make([]byte, 0)
+		payData := make([]byte, 0)
 
 		for _, payment := range s.payments {
 			str := string(payment.ID) + (";") +
@@ -370,9 +370,9 @@ func (s *Service) Export(dir string) error {
 				string(payment.Category) + (";") +
 				string(payment.Status) + ("\n")
 
-			accData = append(accData, []byte(str)...)
+			payData = append(payData, []byte(str)...)
 		}
-		err = os.WriteFile(accDir+"/payments.dump", accData, 0666)
+		err = os.WriteFile(payDir+"/payments.dump", payData, 0666)
 		if err != nil {
 			log.Print(err)
 			return err
@@ -380,13 +380,13 @@ func (s *Service) Export(dir string) error {
 	}
 
 	if s.favorites != nil && len(s.favorites) > 0 {
-		accDir, err := filepath.Abs(dir)
+		favDir, err := filepath.Abs(dir)
 		if err != nil {
 			log.Print(err)
 			return err
 		}
 
-		accData := make([]byte, 0)
+		favData := make([]byte, 0)
 
 		for _, favorite := range s.favorites {
 			str := string(favorite.ID) + (";") +
@@ -395,9 +395,9 @@ func (s *Service) Export(dir string) error {
 				strconv.FormatInt(int64(favorite.Amount), 10) + (";") +
 				string(favorite.Category) + ("\n")
 
-			accData = append(accData, []byte(str)...)
+			favData = append(favData, []byte(str)...)
 		}
-		err = os.WriteFile(accDir+"/favorites.dump", accData, 0666)
+		err = os.WriteFile(favDir+"/favorites.dump", favData, 0666)
 		if err != nil {
 			log.Print(err)
 			return err
