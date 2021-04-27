@@ -741,3 +741,51 @@ func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payme
 	wg.Wait()
 	return payments, nil
 }
+
+//FilterPaymentsByFn - filters out payments by any function.
+func (s *Service) FilterPaymentsByFn(
+	filter func(payment types.Payment) bool, goroutines int) ([]types.Payment, error) {
+
+	if goroutines < 1 {
+		goroutines = 1
+	}
+
+	num := len(s.payments)/goroutines + 1
+
+	wg := sync.WaitGroup{}
+	mu := sync.Mutex{}
+
+	payments := []types.Payment{}
+
+	for i := 0; i < goroutines; i++ {
+
+		wg.Add(1)
+		partOfPayment := []types.Payment{}
+
+		go func(val int) {
+			defer wg.Done()
+			lowIndex := val * num
+			highIndex := (val * num) + num
+
+			for j := lowIndex; j < highIndex; j++ {
+				if j > len(s.payments)-1 {
+					break
+				}
+				if filter(*s.payments[j]) {
+					partOfPayment = append(partOfPayment, *s.payments[j])
+				}
+			}
+			mu.Lock()
+			defer mu.Unlock()
+			payments = append(payments, partOfPayment...)
+		}(i)
+	}
+
+	wg.Wait()
+	return payments, nil
+}
+
+func FilterCategory(payment types.Payment) bool {
+	return payment.Category == "bank"
+}
+

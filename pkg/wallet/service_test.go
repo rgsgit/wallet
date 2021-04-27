@@ -677,3 +677,37 @@ func BenchmarkFilterPayments(b *testing.B) {
 	}
 }
 
+func TestService_FilterPaymentsByFn(t *testing.T) {
+	s := newTestService()
+	Transactions(s)
+
+	payment, err := s.FilterPaymentsByFn(FilterCategory, 0)
+	if err != nil {
+		t.Error(err)
+	}
+
+	want := 3
+	result := len(payment)
+	if !reflect.DeepEqual(result, want) {
+		t.Fatalf("INVALID: result_we_got %v, result_we_want %v", result, want)
+	}
+}
+
+func BenchmarkFilterPaymentsByFn(b *testing.B) {
+	s := newTestService()
+	Transactions(s)
+
+	for i := 0; i < b.N; i++ {
+		payment, err := s.FilterPaymentsByFn(FilterCategory, 10)
+		if err != nil {
+			b.Error(err)
+		}
+
+		want := 3
+		result := len(payment)
+		if !reflect.DeepEqual(result, want) {
+			b.Fatalf("INVALID: result_we_got %v, result_we_want %v", result, want)
+		}
+	}
+}
+
