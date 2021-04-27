@@ -408,6 +408,29 @@ func Transactions(s *testService) {
 	s.FavoritePayment(pay2.ID, "25_for_phone")
 }
 
+func Transactions2(s *testService) {
+	s.RegisterAccount("1111")
+	s.Deposit(1, 500)
+	s.Pay(1, 10, "food")
+	s.Pay(1, 10, "phone")
+	s.Pay(1, 15, "bank")
+	s.Pay(1, 25, "auto")
+	s.Pay(1, 30, "restaurant")
+	s.Pay(1, 50, "auto")
+	s.Pay(1, 60, "bank")
+	s.Pay(1, 50, "bank")
+
+	s.RegisterAccount("2222")
+	s.Deposit(2, 200)
+	s.Pay(2, 40, "phone")
+
+	s.RegisterAccount("3333")
+	s.Deposit(3, 300)
+	s.Pay(3, 36, "auto")
+	s.Pay(3, 12, "food")
+	s.Pay(3, 25, "phone")
+}
+
 func TestService_ExportToFile_success(t *testing.T) {
 	s := newTestService()
 	_, _, err := s.addAccount(defaultTestAccount)
@@ -686,7 +709,7 @@ func TestService_FilterPaymentsByFn(t *testing.T) {
 		t.Error(err)
 	}
 
-	want := 3
+	want := 2
 	result := len(payment)
 	if !reflect.DeepEqual(result, want) {
 		t.Fatalf("INVALID: result_we_got %v, result_we_want %v", result, want)
