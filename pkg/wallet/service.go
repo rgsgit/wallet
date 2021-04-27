@@ -207,17 +207,13 @@ func (s *Service) FavoritePayment(paymentID string, name string) (*types.Favorit
 }
 
 func (s *Service) GetFavoriteByID(favoriteID string) (*types.Favorite, error) {
-	var favorite *types.Favorite
+
 	for _, fav := range s.favorites {
 		if fav.ID == favoriteID {
-			favorite = fav
-			break
+			return fav, nil
 		}
 	}
-	if favorite == nil {
-		return nil, ErrFavoriteNotFound
-	}
-	return favorite, nil
+	return nil, ErrFavoriteNotFound
 }
 
 func (s *Service) PayFromFavorite(favoriteID string) (*types.Payment, error) {
@@ -405,4 +401,175 @@ func (s *Service) Export(dir string) error {
 	}
 
 	return nil
+}
+
+//Import импортирует данные из accounts.dump, payments.dump and favorites.dump
+
+func (s *Service) Import(dir string) error {
+	dir, err := filepath.Abs(dir)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+
+	if _, err = os.Stat(dir); os.IsNotExist(err) {
+		return err
+	}
+
+	
+	accFile, err1 := os.ReadFile(dir + "/accounts.dump")
+	if err1 == nil {
+
+		accData := string(accFile)
+
+		accSlice := strings.Split(accData, "\n")
+		log.Print("accounts : ", accSlice)
+
+		for _, accOperation := range accSlice {
+
+			if len(accOperation) == 0 {
+				break
+			}
+			accStr := strings.Split(accOperation, ";")
+			log.Println("accStr:", accStr)
+
+			id, err := strconv.ParseInt(accStr[0], 10, 64)
+			if err != nil {
+				log.Print(err)
+				return err
+			}
+			phone := types.Phone(accStr[1])
+			balance, err := strconv.ParseInt(accStr[2], 10, 64)
+			if err != nil {
+				log.Print(err)
+				return err
+			}
+
+			accFind, _ := s.FindAccountByID(id)
+			if accFind != nil {
+				accFind.Phone = phone
+				accFind.Balance = types.Money(balance)
+			} else {
+				s.nextAccountID++
+				account := &types.Account{
+					ID:      id,
+					Phone:   phone,
+					Balance: types.Money(balance),
+				}
+				s.accounts = append(s.accounts, account)
+				log.Print(account)
+			}
+		}
+	} else {
+		log.Print(err1)
+	}
+
+	
+	payFile, err2 := os.ReadFile(dir + "/payments.dump")
+	if err2 == nil {
+
+		payData := string(payFile)
+
+		paySlice := strings.Split(payData, "\n")
+		log.Print("paySlice : ", paySlice)
+
+		for _, payOperation := range paySlice {
+
+			if len(payOperation) == 0 {
+				break
+			}
+			payStr := strings.Split(payOperation, ";")
+			log.Println("payStr:", payStr)
+
+			id := payStr[0]
+			accountID, err := strconv.ParseInt(payStr[1], 10, 64)
+			if err != nil {
+				log.Print(err)
+				return err
+			}
+			amount, err := strconv.ParseInt(payStr[2], 10, 64)
+			if err != nil {
+				log.Print(err)
+				return err
+			}
+			category := types.PaymentCategory(payStr[3])
+			status := types.PaymentStatus(payStr[4])
+
+			payAcc, _ := s.FindPaymentByID(id)
+			if payAcc != nil {
+				payAcc.AccountID = accountID
+				payAcc.Amount = types.Money(amount)
+				payAcc.Category = category
+				payAcc.Status = status
+			} else {
+				payment := &types.Payment{
+					ID:        id,
+					AccountID: accountID,
+					Amount:    types.Money(amount),
+					Category:  category,
+					Status:    status,
+				}
+				s.payments = append(s.payments, payment)
+				log.Print(payment)
+			}
+		}
+	} else {
+		log.Print(err2)
+	}
+
+	
+	favFile, err3 := os.ReadFile(dir + "/favorites.dump")
+	if err3 == nil {
+
+		favData := string(favFile)
+
+		favSlice := strings.Split(favData, "\n")
+		log.Print("favSlice : ", favSlice)
+
+		for _, favOperation := range favSlice {
+
+			if len(favOperation) == 0 {
+				break
+			}
+			favStr := strings.Split(favOperation, ";")
+			log.Println("favStr:", favStr)
+
+			id := favStr[0]
+			accountID, err := strconv.ParseInt(favStr[1], 10, 64)
+			if err != nil {
+				log.Print(err)
+				return err
+			}
+			name := favStr[2]
+			amount, err := strconv.ParseInt(favStr[3], 10, 64)
+			if err != nil {
+				log.Print(err)
+				return err
+			}
+			category := types.PaymentCategory(favStr[4])
+
+			favAcc, _ := s.GetFavoriteByID(id)
+			if favAcc != nil {
+				favAcc.AccountID = accountID
+				favAcc.Name = name
+				favAcc.Amount = types.Money(amount)
+				favAcc.Category = category
+			} else {
+				favorite := &types.Favorite{
+					ID:        id,
+					AccountID: accountID,
+					Name:      name,
+					Amount:    types.Money(amount),
+					Category:  category,
+				}
+				s.favorites = append(s.favorites, favorite)
+				log.Print(favorite)
+			}
+		}
+	} else {
+		log.Println(err3)
+	}
+
+	return nil
+
 }
