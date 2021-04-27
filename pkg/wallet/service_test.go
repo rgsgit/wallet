@@ -632,3 +632,48 @@ func TestService_SumPayments(t *testing.T) {
 
 }
 
+func TestService_FilterPayments_success(t *testing.T) {
+	s := newTestService()
+	Transactions(s)
+
+	paymnet, err := s.FilterPayments(1, 0)
+	if err != nil {
+		t.Error(err)
+	}
+
+	want := 8
+	result := len(paymnet)
+	if !reflect.DeepEqual(result, want) {
+		t.Errorf("INVALID: result_we_got %v, result_we_want %v", result, want)
+		return
+	}
+}
+func TestService_FilterPayments_not_Success(t *testing.T) {
+	s := newTestService()
+	Transactions(s)
+
+	_, err := s.FilterPayments(0, 0)
+	if err == nil {
+		t.Error(err)
+	}
+}
+
+func BenchmarkFilterPayments(b *testing.B) {
+	s := newTestService()
+	Transactions(s)
+
+	for i := 0; i < b.N; i++ {
+		paymnet, err := s.FilterPayments(1, 3)
+		if err != nil {
+			b.Error(err)
+		}
+
+		want := 8
+		result := len(paymnet)
+		if !reflect.DeepEqual(result, want) {
+			b.Fatalf("INVALID: result_we_got %v, result_we_want %v", result, want)
+			return
+		}
+	}
+}
+
