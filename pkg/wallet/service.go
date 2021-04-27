@@ -610,3 +610,87 @@ func (s *Service) SumPayments(goroutines int) types.Money {
 	wg.Wait()
 	return sum
 }
+
+//ExportAccountHistory вытаскывает все платежи конктретного акаунта.
+func (s *Service) ExportAccountHistory(accountID int64) ([]types.Payment, error) {
+
+	_, err := s.FindAccountByID(accountID)
+	if err != nil {
+		return nil, ErrAccountNotFound
+	}
+
+	payments := []types.Payment{}
+	for _, payment := range s.payments {
+		if payment.AccountID == accountID {
+			payments = append(payments, *payment)
+		}
+	}
+
+	if len(payments) <= 0 || payments == nil {
+		return nil, ErrPaymentNotFound
+	}
+
+	return payments, nil
+}
+
+//HistoryToFiles сохранение всех данных в файл.
+func (s *Service) HistoryToFiles(payments []types.Payment, dir string, records int) error {
+
+	_, cerr := os.Stat(dir)
+	if os.IsNotExist(cerr) {
+		cerr = os.Mkdir(dir, 0777)
+	}
+	if cerr != nil {
+		return cerr
+	}
+
+	if len(payments) == 0 || payments == nil {
+		return nil
+	}
+
+	data := make([]byte, 0)
+
+	if len(payments) > 0 && len(payments) <= records {
+		for _, payment := range payments {
+			text := []byte(
+				string(payment.ID) + ";" +
+					strconv.FormatInt(int64(payment.AccountID), 10) + ";" +
+					strconv.FormatInt(int64(payment.Amount), 10) + ";" +
+					string(payment.Category) + ";" +
+					string(payment.Status) + "\n")
+
+			data = append(data, text...)
+		}
+
+		path := dir + "/payments.dump"
+		err := os.WriteFile(path, data, 0777)
+		if err != nil {
+			log.Print(err)
+			return err
+		}
+	} else {
+		for i, payment := range payments {
+
+			text := []byte(
+				string(payment.ID) + ";" +
+					strconv.FormatInt(int64(payment.AccountID), 10) + ";" +
+					strconv.FormatInt(int64(payment.Amount), 10) + ";" +
+					string(payment.Category) + ";" +
+					string(payment.Status) + "\n")
+
+			data = append(data, text...)
+
+			if (i+1)%records == 0 || i == len(payments)-1 {
+
+				path := dir + "/payments" + strconv.Itoa((i/records)+1) + ".dump"
+				err := os.WriteFile(path, data, 0777)
+				if err != nil {
+					log.Print(err)
+					return err
+				}
+				data = nil
+			}
+		}
+	}
+	return nil
+}

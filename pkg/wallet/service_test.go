@@ -470,4 +470,104 @@ func BenchmarkSumPayments(b *testing.B) {
 	}
 }
 
+func TestService_ExportAccountHistory_success(t *testing.T) {
+	s := newTestService()
+	Transactions(s)
+	_, err := s.ExportAccountHistory(1)
+	if err != nil {
+		t.Error(err)
+	}
+}
 
+func TestService_ExportAccountHistory_notSuccess1(t *testing.T) {
+	s := newTestService()
+	s.RegisterAccount("")
+	s.Deposit(0, 0)
+	s.Pay(0, 0, "")
+	_, err := s.ExportAccountHistory(1)
+	if err == nil {
+		t.Error(err)
+	}
+}
+func TestService_ExportAccountHistory_notSuccess2(t *testing.T) {
+	s := newTestService()
+	_, _, err := s.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	anotherID := s.nextAccountID + 1
+	_, err = s.FindAccountByID(anotherID)
+	if err == nil {
+		t.Error("ExportAccountHistory(): must return error, returned nil")
+	}
+
+	_, err = s.ExportAccountHistory(3)
+	if err == nil {
+		t.Error(err)
+	}
+	if err != ErrAccountNotFound {
+		t.Errorf("ExportAccountHistory(): must return ErrAccountNotFound, returned = %v", err)
+		return
+	}
+
+}
+
+func TestService_HistoryToFiles_success1(t *testing.T) {
+	s := newTestService()
+	Transactions(s)
+
+	payments, err := s.ExportAccountHistory(1)
+	if err != nil {
+		t.Error(err)
+	}
+	err = s.HistoryToFiles(payments, "data", 3)
+	if err != nil {
+		t.Error(err)
+	}
+}
+func TestService_HistoryToFiles_Success2(t *testing.T) {
+	s := newTestService()
+	Transactions(s)
+
+	payments, err := s.ExportAccountHistory(1)
+	if err != nil {
+		t.Error(err)
+	}
+	err = s.HistoryToFiles(payments, "data", 12)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestService_HistoryToFiles_notSuccess1(t *testing.T) {
+	s := newTestService()
+	Transactions(s)
+
+	payment := []types.Payment{}
+	err := s.HistoryToFiles(payment, "data", 12)
+	if err != nil {
+		t.Error(err)
+	}
+}
+func TestService_HistoryToFiles_notSuccess2(t *testing.T) {
+	s := newTestService()
+	Transactions(s)
+
+	payment := []types.Payment{}
+	err := s.HistoryToFiles(payment, "", 0)
+	if err == nil {
+		t.Error(err)
+	}
+}
+
+func TestService_SumPayments(t *testing.T) {
+	s := newTestService()
+	Transactions(s)
+	sum := s.SumPayments(0)
+	if sum != 363 {
+		t.Errorf("TestService_SumPayments(): sum=%v", sum)
+	}
+
+}
