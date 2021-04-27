@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/rgsgit/wallet/pkg/types"
@@ -416,7 +417,6 @@ func (s *Service) Import(dir string) error {
 		return err
 	}
 
-	
 	accFile, err1 := os.ReadFile(dir + "/accounts.dump")
 	if err1 == nil {
 
@@ -464,7 +464,6 @@ func (s *Service) Import(dir string) error {
 		log.Print(err1)
 	}
 
-	
 	payFile, err2 := os.ReadFile(dir + "/payments.dump")
 	if err2 == nil {
 
@@ -517,7 +516,6 @@ func (s *Service) Import(dir string) error {
 		log.Print(err2)
 	}
 
-	
 	favFile, err3 := os.ReadFile(dir + "/favorites.dump")
 	if err3 == nil {
 
@@ -572,4 +570,43 @@ func (s *Service) Import(dir string) error {
 
 	return nil
 
+}
+
+// SumPayments суммирует платежы
+func (s *Service) SumPayments(goroutines int) types.Money {
+
+	if goroutines < 1 {
+		goroutines = 1
+	}
+
+	wg := sync.WaitGroup{}
+	mu := sync.Mutex{}
+
+	num := len(s.payments)/goroutines + 1
+	sum := types.Money(0)
+
+	for i := 0; i < goroutines; i++ {
+
+		wg.Add(1)
+		total := types.Money(0)
+
+		func(val int) {
+			defer wg.Done()
+			lowIndex := val * num
+			highIndex := (val * num) + num
+
+			for j := lowIndex; j < highIndex; j++ {
+				if j > len(s.payments)-1 {
+					break
+				}
+				total += s.payments[j].Amount
+			}
+			mu.Lock()
+			defer mu.Unlock()
+			sum += total
+		}(i)
+	}
+
+	wg.Wait()
+	return sum
 }
