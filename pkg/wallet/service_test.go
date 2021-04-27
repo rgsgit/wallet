@@ -405,6 +405,59 @@ func Transactions(s *testService) {
 	s.Pay(3, 25, "phone")
 }
 
+func TestService_ExportToFile_success(t *testing.T) {
+	s := newTestService()
+	_, _, err := s.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = s.ExportToFile("file.txt")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestService_ExportToFile_notFound(t *testing.T) {
+	s := newTestService()
+	_, _, err := s.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = s.ExportToFile("")
+	if err == nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestService_ImportFromFile_success(t *testing.T) {
+	s := newTestService()
+	s.RegisterAccount("1111")
+	s.Deposit(1, 500)
+	pay, _ := s.Pay(1, 100, "phone")
+	s.FavoritePayment(pay.ID, "my_phone")
+
+	err := s.ImportFromFile("file.txt")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+func TestService_ImportFromFile_noSuccess(t *testing.T) {
+	s := newTestService()
+
+	err := s.ImportFromFile("")
+	if err == nil {
+		t.Error(err)
+		return
+	}
+}
+
 func BenchmarkSumPayments(b *testing.B) {
 	s := newTestService()
 	Transactions(s)
@@ -416,3 +469,5 @@ func BenchmarkSumPayments(b *testing.B) {
 		}
 	}
 }
+
+
