@@ -5,11 +5,11 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
-
 	"github.com/rgsgit/wallet/pkg/types"
 )
 
@@ -326,5 +326,83 @@ func (s *Service) ImportFromFile(path string) error {
 		s.accounts = append(s.accounts, account)
 		log.Print(account)
 	}
+	return nil
+}
+
+//Export экспортирует все в accounts.dump, payments.dump and favorites.dump
+func (s *Service) Export(dir string) error {
+	if s.accounts != nil && len(s.accounts) > 0 {
+		accDir, err := filepath.Abs(dir)
+		if err != nil {
+			log.Print(err)
+			return err
+		}
+
+		accData := make([]byte, 0)
+
+		for _, account := range s.accounts {
+			str := (strconv.FormatInt(int64(account.ID), 10) + (";") +
+				string(account.Phone) + (";") +
+				strconv.FormatInt(int64(account.Balance), 10) + ("\n"))
+
+			accData = append(accData, []byte(str)...)
+		}
+		err = os.WriteFile(accDir+"/accounts.dump", accData, 0666)
+		if err != nil {
+			log.Print(err)
+			return err
+		}
+	}
+
+	if s.payments != nil && len(s.payments) > 0 {
+		accDir, err := filepath.Abs(dir)
+		if err != nil {
+			log.Print(err)
+			return err
+		}
+
+		accData := make([]byte, 0)
+
+		for _, payment := range s.payments {
+			str := string(payment.ID) + (";") +
+				strconv.FormatInt(int64(payment.AccountID), 10) + (";") +
+				strconv.FormatInt(int64(payment.Amount), 10) + (";") +
+				string(payment.Category) + (";") +
+				string(payment.Status) + ("\n")
+
+			accData = append(accData, []byte(str)...)
+		}
+		err = os.WriteFile(accDir+"/payments.dump", accData, 0666)
+		if err != nil {
+			log.Print(err)
+			return err
+		}
+	}
+
+	if s.favorites != nil && len(s.favorites) > 0 {
+		accDir, err := filepath.Abs(dir)
+		if err != nil {
+			log.Print(err)
+			return err
+		}
+
+		accData := make([]byte, 0)
+
+		for _, favorite := range s.favorites {
+			str := string(favorite.ID) + (";") +
+				strconv.FormatInt(int64(favorite.AccountID), 10) + (";") +
+				string(favorite.Name) + (";") +
+				strconv.FormatInt(int64(favorite.Amount), 10) + (";") +
+				string(favorite.Category) + ("\n")
+
+			accData = append(accData, []byte(str)...)
+		}
+		err = os.WriteFile(accDir+"/favorites.dump", accData, 0666)
+		if err != nil {
+			log.Print(err)
+			return err
+		}
+	}
+
 	return nil
 }
