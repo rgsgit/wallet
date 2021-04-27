@@ -35,7 +35,7 @@ var defaultTestAccount = testAccount{
 		},
 		{
 			amount:   10_00,
-			category: "auto",
+			category: "food",
 		},
 		{
 			amount:   10_00,
@@ -392,17 +392,20 @@ func Transactions(s *testService) {
 	s.Pay(1, 30, "restaurant")
 	s.Pay(1, 50, "auto")
 	s.Pay(1, 60, "bank")
-	s.Pay(1, 50, "bank")
+	pay, _ := s.Pay(1, 50, "bank")
+	s.FavoritePayment(pay.ID, "50_for_bank")
 
 	s.RegisterAccount("2222")
 	s.Deposit(2, 200)
-	s.Pay(2, 40, "phone")
+	pay1, _ := s.Pay(2, 40, "phone")
+	s.FavoritePayment(pay1.ID, "40_for_phone")
 
 	s.RegisterAccount("3333")
 	s.Deposit(3, 300)
 	s.Pay(3, 36, "auto")
 	s.Pay(3, 12, "food")
-	s.Pay(3, 25, "phone")
+	pay2, _ := s.Pay(3, 25, "phone")
+	s.FavoritePayment(pay2.ID, "25_for_phone")
 }
 
 func TestService_ExportToFile_success(t *testing.T) {
@@ -458,6 +461,62 @@ func TestService_ImportFromFile_noSuccess(t *testing.T) {
 	}
 }
 
+func TestService_Export_success(t *testing.T) {
+	s := newTestService()
+	_, _, err := s.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	Transactions(s)
+
+	err = s.Export("../../data")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestService_Import_success(t *testing.T) {
+	s := newTestService()
+	s.RegisterAccount("1111")
+	s.Deposit(1, 500)
+	pay, _ := s.Pay(1, 100, "phone")
+	s.FavoritePayment(pay.ID, "my_phone")
+
+	err := s.Import("../../data")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestService_Export_noSuccess(t *testing.T) {
+	s := newTestService()
+	_, _, err := s.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	Transactions(s)
+
+	err = s.Export("../data")
+	if err == nil {
+		t.Error(err)
+		return
+	}
+}
+
+func TestService_Import_noSuccess(t *testing.T) {
+	s := newTestService()
+
+	err := s.Import("../nodir")
+	if err == nil {
+		t.Error(err)
+		return
+	}
+}
+
 func BenchmarkSumPayments(b *testing.B) {
 	s := newTestService()
 	Transactions(s)
@@ -469,5 +528,3 @@ func BenchmarkSumPayments(b *testing.B) {
 		}
 	}
 }
-
-
