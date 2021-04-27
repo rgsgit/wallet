@@ -726,7 +726,7 @@ func BenchmarkFilterPaymentsByFn(b *testing.B) {
 			b.Error(err)
 		}
 
-		want := 3
+		want := 2
 		result := len(payment)
 		if !reflect.DeepEqual(result, want) {
 			b.Fatalf("INVALID: result_we_got %v, result_we_want %v", result, want)
