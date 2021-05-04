@@ -789,3 +789,68 @@ func FilterCategory(payment types.Payment) bool {
 	return payment.Category == "bank"
 }
 
+//SumPaymentsWithProgress разделяет в соответствие с заданным размером и суммирует все платежи в отдельных горутинах
+func (s *Service) SumPaymentsWithProgress() <-chan types.Progress {
+
+	size := 100_000
+
+	data := []types.Money{0}
+	for _, payment := range s.payments {
+		data = append(data, payment.Amount)
+	}
+
+	goroutines := 1 + len(data)/size
+
+	if goroutines <= 1 {
+		goroutines = 1
+	}
+
+	channels := make([]<-chan types.Progress, goroutines)
+
+	for i := 0; i < goroutines; i++ {
+
+		lowIndex := i * size
+		highIndex := (i + 1) * size
+
+		if highIndex > len(data) {
+			highIndex = len(data)
+		}
+
+		ch := make(chan types.Progress)
+		go func(ch chan<- types.Progress, data []types.Money) {
+			defer close(ch)
+			sum := types.Money(0)
+			for _, v := range data {
+				sum += v
+			}
+			ch <- types.Progress{
+				Part:   len(data),
+				Result: sum,
+			}
+		}(ch, data[lowIndex:highIndex])
+		channels[i] = ch
+	}
+	return Merge(channels)
+}
+
+//Merge возвращает канал с сообщении из всех переданных каналов
+func Merge(channels []<-chan types.Progress) <-chan types.Progress {
+	wg := sync.WaitGroup{}
+	wg.Add(len(channels))
+
+	merged := make(chan types.Progress)
+
+	for _, ch := range channels {
+		go func(ch <-chan types.Progress) {
+			defer wg.Done()
+			for val := range ch {
+				merged <- val
+			}
+		}(ch)
+	}
+	go func() {
+		defer close(merged)
+		wg.Wait()
+	}()
+	return merged
+}

@@ -1,5 +1,7 @@
 package types
 
+//import "github.com/rgsgit/bank/v2/pkg/types"
+
 //Money the minimal money unit
 type Money int64
 
@@ -42,4 +44,9 @@ type Favorite struct {
 	Name      string
 	Amount    Money
 	Category  PaymentCategory
+}
+
+type Progress struct {
+	Part   int
+	Result Money
 }
